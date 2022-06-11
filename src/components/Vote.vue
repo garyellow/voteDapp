@@ -31,7 +31,7 @@
                 <div> {{ proposals }} </div> -->
             </div>
 
-            <button :disabled="lock" @click="vote(1)">投票</button>
+            <button :disabled="lock" @click="vote(1)">{{ isAuthor }}</button>
         </div>
 
         <div class="manager" v-if="isAuthor">
@@ -46,7 +46,7 @@
 
 <script>
 import Web3 from "web3";
-import contract from "truffle-contract";
+import contract from "@truffle/contract";
 import Vote from '../../build/contracts/Vote.json';
 
 export default {
