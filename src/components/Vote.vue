@@ -4,35 +4,33 @@
             <h1>Voting</h1>
         </div>
         <!-- <div class="vote">
-      <div v-for="candidate in candidates" :key="candidate">
-        <div class="candidate">
-          <div class="candidate-name">
-            <h2>{{ candidate.name }}</h2>
-          </div>
-          <div class="candidate-vote">
-            <button @click="vote(index)">Vote</button>
-          </div>
-        </div>
-      </div>
-    </div> -->
+            <div v-for="candidate in candidates" :key="candidate">
+                <div class="candidate">
+                    <div class="candidate-name">
+                        <h2>{{ candidate.name }}</h2>
+                    </div>
+                    <div class="candidate-vote">
+                        <button @click="vote(index)">Vote</button>
+                    </div>
+                </div>
+            </div>
+        </div> -->
 
         <div class="status">
             <div v-if="!lock">開放投票</div>
             <div v-if="lock">投票已結束</div>
-            <!-- <div>眾籌截止時間: 123 </div> -->
         </div>
 
-        <div v-if="!lock" class="card-bkg">
+        <!-- <div v-if="!lock" class="card-bkg">
             <div class="award-des">
-                <!-- <span>參與價格</span> -->
-                <!-- <div> {{ voted }} </div>
+                <div> {{ voted }} </div>
                 <div> {{ lock }} </div>
                 <div> {{ isAuthor }} </div>
-                <div> {{ proposals }} </div> -->
+                <div> {{ proposals }} </div>
             </div>
 
             <button :disabled="lock" @click="vote(1)">{{ isAuthor }}</button>
-        </div>
+        </div> -->
 
         <div class="manager" v-if="isAuthor">
             <div class="manager-title">
