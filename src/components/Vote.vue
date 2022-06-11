@@ -19,18 +19,14 @@
         <div class="status">
             <div v-if="!lock">開放投票</div>
             <div v-if="lock">投票已結束</div>
+            <!-- <div> {{ proposals }} </div> -->
         </div>
 
-        <!-- <div v-if="!lock" class="card-bkg">
-            <div class="award-des">
-                <div> {{ voted }} </div>
-                <div> {{ lock }} </div>
-                <div> {{ isAuthor }} </div>
-                <div> {{ proposals }} </div>
-            </div>
+        <div v-if="!lock" class="card-bkg">
+            <input v-model="message" />
 
-            <button :disabled="lock" @click="vote(1)">{{ isAuthor }}</button>
-        </div> -->
+            <button @click="setAccount">設定帳號</button>
+        </div>
 
         <div class="manager" v-if="isAuthor">
             <div class="manager-title">
@@ -54,7 +50,11 @@ export default {
             voted: null,
             lock: null,
             isAuthor: null,
-            proposals: [{ 123: 123 }],
+            message: null,
+            proposals: {
+                name: null,
+                votecount: null,
+            },
         };
     },
 
@@ -99,13 +99,18 @@ export default {
             );
         },
 
-        closeVote: function () {
+        async setAccount() {
+            this.account = this.message
+            await this.getCrowdInfo()
+        },
+
+        closeVote() {
             this.voting.setLock(true, { from: this.account }).then(() =>
                 this.getCrowdInfo()
             );
         },
 
-        openVote: function () {
+        openVote() {
             this.voting.setLock(false, { from: this.account }).then(() =>
                 this.getCrowdInfo()
             );
