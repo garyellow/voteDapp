@@ -7,14 +7,14 @@ npm install ganache -golbal
 npm install truffle -golbal
 ```
 
-### Deployed contract
-```
-truffle migrate
-```
-
 ### Start HttpProvider
 ```
 ganache
+```
+
+### Deployed contract
+```
+truffle migrate
 ```
 
 ### Compiles and hot-reloads for development
