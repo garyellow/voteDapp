@@ -1,8 +1,20 @@
-# vote_dapp
+# Vote Dapp
 
 ## Project setup
 ```
 npm install
+npm install ganache -golbal
+npm install truffle -golbal
+```
+
+## Deployed contract
+```
+truffle migrate
+```
+
+## Start HttpProvider
+```
+ganache
 ```
 
 ### Compiles and hot-reloads for development
