@@ -20,10 +20,12 @@ contract Vote {
     mapping(address => Voter) public voters;
     Proposal[] public proposals;
     bool public lock;
+    uint voterCnt;
 
     constructor(string[] memory proposalNames) {
         chairperson = msg.sender;
         lock = false;
+        voterCnt = 0;
         for (uint i = 0; i < proposalNames.length; i++) {
             proposals.push(Proposal({name: proposalNames[i], voteCount: 0, win: false}));
         }
@@ -34,12 +36,25 @@ contract Vote {
         lock = _lock;
     }
 
-    function register(string memory _ID) external returns (address _user) {
-        require(users[_ID] == address(0), "You have already registered.");
-        require(voters[msg.sender].isValid == false, "This account has been used.");
-        users[_ID] = _user = msg.sender;
+    function checkAccount(string memory _ID) external view returns (int) {
+        if(users[_ID] == address(0)) return -1;
+        if(voters[msg.sender].isValid == false) return -2;
+        if(users[_ID] != msg.sender) return -3;
+        return 1;
+    }
+
+    function getVoterCnt() external view returns (uint) {
+        return voterCnt;
+    }
+
+    function register(string memory _ID) external returns(int){
+        if(users[_ID] != address(0)) return -1;
+        if(voters[msg.sender].isValid) return -2;
+        users[_ID] = msg.sender;
         voters[msg.sender].isValid = true;
         voters[msg.sender].voteto = -1;
+        voterCnt += 1;
+        return 1;
     }
 
     function getbollot(string memory _ID) external {
@@ -51,52 +66,6 @@ contract Vote {
 
         voters[msg.sender].bollot = 1;
     }
-
-    // function giveRightToVote(address voter) external {
-    //     require(
-    //         msg.sender == chairperson,
-    //         "Only chairperson can give right to vote."
-    //     );
-
-    //     require(!voters[voter].getballot, "The voter already got ballot.");
-    //     voters[voter].getballot = true;
-
-    //     address to = voter;
-    //     while (voters[to].delegate != address(0)) to = voters[to].delegate;
-
-    //     Voter storage delegated = voters[to];
-    //     if (delegated.voted) {
-    //         require(lock == false, "Vote is locked.");
-    //         proposals[delegated.vote].voteCount += 1;
-    //     } else delegated.weight += 1;
-    // }
-
-    // function delegate(address to) external {
-    //     Voter storage sender = voters[msg.sender];
-    //     require(!sender.voted, "You already voted or delegated.");
-    //     require(to != msg.sender, "Self-delegation is disallowed.");
-
-
-    //     while (voters[to].delegate != address(0)) {
-    //         delegates.push(to);
-    //         to = voters[to].delegate;
-    //         require(to != msg.sender, "Found loop in delegation.");
-    //     }
-
-    //     while(delegates.length > 0) {
-    //         address from = delegates[delegates.length - 1];
-    //         delegates.pop();
-    //         voters[from].delegate = to;
-    //     }
-
-    //     sender.voted = true;
-    //     sender.delegate = to;
-    //     Voter storage delegated = voters[to];
-    //     if (delegated.voted) {
-    //         require(lock == false, "Vote is locked.");
-    //         proposals[delegated.vote].voteCount += sender.weight;
-    //     } else delegated.weight += sender.weight;
-    // }
 
     function vote(uint proposal) external {
         require(lock == false, "Vote is locked.");

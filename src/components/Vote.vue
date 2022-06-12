@@ -3,32 +3,38 @@
         <div class="title">
             <h1>Voting</h1>
         </div>
-        <!-- <div class="vote">
-            <div v-for="candidate in candidates" :key="candidate">
-                <div class="candidate">
-                    <div class="candidate-name">
-                        <h2>{{ candidate.name }}</h2>
-                    </div>
-                    <div class="candidate-vote">
-                        <button @click="vote(index)">Vote</button>
-                    </div>
-                </div>
-            </div>
-        </div> -->
+        <div>{{ account }}</div>
 
         <div class="status">
-            <div v-if="!lock">開放投票</div>
+            <div v-if="!lock">投票進行中</div>
             <div v-if="lock">投票已結束</div>
-            <!-- <div> {{ proposals }} </div> -->
+            <div>{{ loginState }}</div>
         </div>
 
-        <div v-if="!lock" class="card-bkg">
-            <input v-model="message" />
-
-            <button @click="setAccount">設定帳號</button>
+        <div v-if="!loginState" class="user-info">
+            <label>帳號</label>
+            <input v-model.trim="curAccount" />
+            <br />
+            <!-- <button @click="setAccount">設定帳號</button> -->
+            <label>ID</label>
+            <input v-model.trim="ID" />
+            <br />
+            <button @click="register">註冊</button>
+            <button @click="login">登入</button>
+            <div v-if="loginfail != null">{{ loginfail }}</div>
         </div>
 
-        <div class="manager" v-if="isAuthor">
+        <div v-if="loginState" class="user-info">
+            <label>帳號</label>
+            <input :disable="true" v-model.trim="curAccount" />
+            <br />
+            <label>ID</label>
+            <input :disable="true" v-model.trim="ID" />
+            <br />
+            <button @click="logout">登出</button>
+        </div>
+
+        <div class="manager" v-if="isAuthor && loginState">
             <div class="manager-title">
                 <h2>管理員設定</h2>
                 <button :disabled="!lock" @click="openVote">開啟投票</button>
@@ -50,11 +56,15 @@ export default {
             voted: null,
             lock: null,
             isAuthor: null,
-            message: null,
             proposals: {
                 name: null,
                 votecount: null,
             },
+            curAccount: null,
+            ID: null,
+            loginState: false,
+            loginfail: null,
+            temp: null,
         };
     },
 
@@ -68,10 +78,7 @@ export default {
         async initWeb3Account() {
             this.provider = new Web3.providers.HttpProvider("http://127.0.0.1:8545");
             this.web3 = new Web3(this.provider);
-            this.web3.eth.getAccounts().then(accs => {
-                this.account = accs[0]
-            });
-            alert("connect to blockchain");
+            this.web3.eth.getAccounts().then(accs => this.account = accs[0]);
         },
 
         // 初始化合约实例
@@ -99,18 +106,69 @@ export default {
             );
         },
 
-        async setAccount() {
-            this.account = this.message
-            await this.getCrowdInfo()
+        // async setAccount() {
+        //     this.account = this.message
+        //     await this.getCrowdInfo()
+        // },
+
+        async login() {
+            this.voting.checkAccount(this.ID, { from: this.curAccount }).then(
+                r => {
+                    if (r == 1) {
+                        this.loginState = true
+                        this.account = this.curAccount
+                        this.loginfail = null
+                    } else if(r ==-1){
+                        this.loginfail = "ID不存在，請先註冊"
+                    } else if(r ==-2){
+                        this.loginfail = "帳號不存在，請先註冊"
+                    } else if(r ==-3){
+                        this.ID = this.curAccount = null
+                        this.loginfail = "ID 或 帳號錯誤，請重新輸入"
+                    }
+                }
+            );
         },
 
-        closeVote() {
+        async logout() {
+            this.loginState = false
+            this.web3.eth.getAccounts().then(accs => this.account = accs[0])
+            this.curAccount = null
+            this.ID = null
+        },
+
+        async register() {
+            this.voting.getVoterCnt().then(
+                r => {
+                    alert("目前有 " + r + " 位投票者")
+                    if (r < 10) {
+                        this.web3.eth.getAccounts().then(accs => this.account = accs[r])
+                        this.voting.register(this.ID, { from: this.account }).then(
+                            r => {
+                                if (r == 1) {
+                                    alert("註冊成功")
+                                    this.loginState = true
+                                    this.loginfail = null
+                                } else if (r == -1) {
+                                    this.loginfail = "此ID已被註冊"
+                                } else if (r == -2) {
+                                    this.loginfail = "此帳號已被使用"
+                                }
+                            }
+                        );
+                    } else {
+                        alert("已超過人數上限")
+                    }
+                });
+        },
+
+        async closeVote() {
             this.voting.setLock(true, { from: this.account }).then(() =>
                 this.getCrowdInfo()
             );
         },
 
-        openVote() {
+        async openVote() {
             this.voting.setLock(false, { from: this.account }).then(() =>
                 this.getCrowdInfo()
             );
@@ -148,21 +206,17 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-    margin: 40px 0 0;
-}
-
-ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-li {
+label {
     display: inline-block;
-    margin: 0 10px;
+    width: 40px;
 }
 
-a {
-    color: #42b983;
+input {
+    width: 30%;
+    height: 25px;
+    border: 1px solid rgb(160, 160, 255);
+    border-radius: 5px;
+    padding: 0 10px;
+    font-size: 14px;
 }
 </style>
