@@ -37,9 +37,13 @@ contract Vote {
         lock = _lock;
     }
 
+    function newUser(string memory _ID) external view returns (bool) {
+        return users[_ID] == address(0);
+    }
+
     function checkAccount(string memory _ID, address _acc) external view returns (uint) {
         if(users[_ID] == address(0)) return 2;
-        if(voters[_acc].bollot == 1 || voters[_acc].voted == true) return 3;
+        if(voters[_acc].bollot == 0 && voters[_acc].voted == false) return 3;
         if(users[_ID] != _acc) return 4;
         return 1;
     }
