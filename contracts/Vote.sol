@@ -6,7 +6,6 @@ contract Vote {
         uint bollot;
         bool voted;
         int voteto;
-        bool isValid;
     }
 
     struct Proposal {
@@ -40,36 +39,18 @@ contract Vote {
 
     function checkAccount(string memory _ID, address _acc) external view returns (uint) {
         if(users[_ID] == address(0)) return 2;
-        if(voters[_acc].isValid == false) return 3;
+        if(voters[_acc].bollot == 1 || voters[_acc].voted == true) return 3;
         if(users[_ID] != _acc) return 4;
         return 1;
     }
 
     function register(string memory _ID, address _acc) external {
         require(users[_ID] == address(0), "ID already exists.");
-        require(voters[_acc].isValid == false, "Account already registered.");
+        require(voters[_acc].bollot == 0 || voters[_acc].voted == false, "Account already registered.");
         users[_ID] = _acc;
-        voters[_acc].isValid = true;
+        voters[_acc].bollot = 1;
         voters[_acc].voteto = -1;
         voterCnt++;
-    }
-
-    function getBollot(string memory _ID) external {
-        require(lock == false, "The vote is locked.");
-        require(users[_ID] != address(0), "You should register first.");
-        require(users[_ID] == msg.sender, "Invalid user.");
-        require(voters[msg.sender].voted == false, "You have already voted.");
-        require(voters[msg.sender].bollot == 0, "You have already got bollot.");
-
-        voters[msg.sender].bollot = 1;
-    }
-
-    function getProposalName(uint proposal) external view returns (string memory, uint, bool) {
-        return (proposals[proposal].name, proposals[proposal].voteCnt, proposals[proposal].win);
-    }
-
-    function getCurBollot(uint proposal) external view returns (uint) {
-        return proposals[proposal].voteCnt;
     }
 
     function vote(uint proposal) external {

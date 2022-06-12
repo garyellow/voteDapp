@@ -3,6 +3,7 @@
         <div class="title">
             <h1>Voting</h1>
         </div>
+        <div>{{ loginState }}</div>
 
         <div class="status">
             <div v-if="!lock">投票進行中</div>
@@ -28,10 +29,14 @@
             <br />
             <button @click="logout">登出</button>
             <br />
+            <list v-for="i in proposalCnt" :key="i">
+                <div>{{ proposal[i].name }}</div>
+                <!-- <div>{{ proposal.description }}</div> -->
+                <div>{{ proposal[i].voteCount }}</div>
+                <button @click="vote(i)">投{{ i + 1 }}號</button>
+            </list>
             <div>{{ proposals }}</div>
-            <!-- <div>{{ proposals[0] }}</div> -->
-            <!-- <div>{{ proposals[0].name }}</div> -->
-            <!-- <li v-for="i in proposals">{{ i }}</li> -->
+            <div> {{ voter }}</div>
             <br />
             <button @click="vote(0)">投1號</button>
             <button @click="vote(1)">投2號</button>
@@ -60,9 +65,11 @@ export default {
             lock: null,
             isAuthor: null,
             proposals: [],
+            proposalCnt: null,
+            voter: null,
             curAccount: null,
             ID: null,
-            loginState: false,
+            loginState: null,
             fail: null,
         };
     },
@@ -87,20 +94,26 @@ export default {
             this.voting.proposalCnt().then(cnt => {
                 for (let index = 0; index < cnt; index++) {
                     this.voting.proposals(index).then(res => {
-                        this.proposals.push({ name: res.name, voteCnt: res.voteCnt, win: res.win })
+                        this.proposals.push(res)
                     })
                 }
             })
+            this.loginState = false
         },
 
         async renewInfo() {
-            this.voting.proposalCnt().then(cnt => {
-                for (let index = 0; index < cnt; index++) {
-                    this.voting.proposals(index).then(res => {
-                        this.proposals[index] = { name: res.name, voteCnt: res.voteCnt, win: res.win }
-                    })
-                }
+            await this.voting.proposalCnt().then(r => this.proposalCnt = r.toNumber())
+
+            for (let index = 0; index < this.proposalCnt; index++) {
+                await this.voting.proposals(index).then(res => {
+                    this.proposals[index] = res
+                })
+            }
+
+            this.voting.voters(this.account).then(voter => {
+                this.voter = voter
             })
+
             this.voting.lock().then(
                 r => this.lock = r
             );
@@ -110,6 +123,7 @@ export default {
         },
 
         login() {
+            this.fail = null
             if (this.curAccount == null || this.ID == null) {
                 this.fail = "帳號和ID不能為空"
                 return
@@ -122,6 +136,7 @@ export default {
                 this.fail = "帳號錯誤"
                 return
             }
+
             this.voting.checkAccount(this.ID, this.curAccount, { from: this.account }).then(
                 r => {
                     if (r == 1) {
@@ -141,6 +156,7 @@ export default {
         },
 
         async logout() {
+            this.fail = null
             this.loginState = false
             this.web3.eth.getAccounts().then(accs => this.account = accs[0])
             this.curAccount = null
@@ -149,6 +165,7 @@ export default {
         },
 
         getNewAccount() {
+            this.fail = null
             this.voting.voterCnt().then(
                 r => {
                     if (r < 10) {
@@ -159,7 +176,7 @@ export default {
                 }).then(() => this.renewInfo())
         },
 
-        async register() {
+        register() {
             this.fail = null
             if (this.curAccount == null || this.ID == null) {
                 this.fail = "帳號和ID不能為空"
@@ -174,7 +191,7 @@ export default {
                 return
             }
 
-            await this.voting.register(this.ID, this.curAccount, { from: this.account }).then(
+            this.voting.register(this.ID, this.curAccount, { from: this.account }).then(
                 () => {
                     this.loginState = true
                     this.account = this.curAccount
@@ -182,8 +199,8 @@ export default {
                 }
             ).then(() => this.renewInfo())
 
-            if (this.fail == null) {
-                this.fail = "註冊失敗"
+            if (this.loginState == false) {
+                this.fail = "註冊失敗，請檢察ID或帳號是否已被註冊"
             }
         },
 
