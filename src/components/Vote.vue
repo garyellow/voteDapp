@@ -3,21 +3,18 @@
         <div class="title">
             <h1>Voting</h1>
         </div>
-        <div>{{ account }}</div>
 
         <div class="status">
             <div v-if="!lock">投票進行中</div>
             <div v-if="lock">投票已結束</div>
-            <div>{{ loginState }}</div>
         </div>
 
         <div v-if="!loginState" class="user-info">
-            <label>帳號</label>
-            <input v-model.trim="curAccount" />
-            <br />
-            <!-- <button @click="setAccount">設定帳號</button> -->
             <label>ID</label>
             <input v-model.trim="ID" />
+            <br />
+            <label>帳號</label>
+            <input v-model.trim="curAccount" />
             <br />
             <button @click="getNewAccount">新帳號</button>
             <button @click="register">註冊</button>
@@ -26,13 +23,19 @@
         </div>
 
         <div v-if="loginState" class="user-info">
-            <label>帳號</label>
-            <input :disable="true" v-model.trim="curAccount" />
-            <br />
-            <label>ID</label>
-            <input :disable="true" v-model.trim="ID" />
+            <div>ID：{{ ID }}</div>
+            <div>帳號：{{ curAccount }}</div>
             <br />
             <button @click="logout">登出</button>
+            <br />
+            <div>{{ proposals }}</div>
+            <!-- <div>{{ proposals[0] }}</div> -->
+            <!-- <div>{{ proposals[0].name }}</div> -->
+            <!-- <li v-for="i in proposals">{{ i }}</li> -->
+            <br />
+            <button @click="vote(0)">投1號</button>
+            <button @click="vote(1)">投2號</button>
+            <button @click="vote(2)">投3號</button>
         </div>
 
         <div class="manager" v-if="isAuthor && loginState">
@@ -54,25 +57,20 @@ export default {
     name: 'My_vote',
     data() {
         return {
-            voted: null,
             lock: null,
             isAuthor: null,
-            proposals: {
-                name: null,
-                votecount: null,
-            },
+            proposals: [],
             curAccount: null,
             ID: null,
             loginState: false,
             fail: null,
-            temp: null,
         };
     },
 
     async created() {
         await this.initWeb3Account()
         await this.initContract()
-        await this.getCrowdInfo()
+        await this.renewInfo()
     },
 
     methods: {
@@ -82,32 +80,36 @@ export default {
             this.web3.eth.getAccounts().then(accs => this.account = accs[0]);
         },
 
-        // 初始化合约实例
         async initContract() {
-            const voteContract = contract(Vote);
-            voteContract.setProvider(this.provider);
+            const voteContract = contract(Vote)
+            voteContract.setProvider(this.provider)
             this.voting = await voteContract.deployed()
+            this.voting.proposalCnt().then(cnt => {
+                for (let index = 0; index < cnt; index++) {
+                    this.voting.proposals(index).then(res => {
+                        this.proposals.push({ name: res.name, voteCnt: res.voteCnt, win: res.win })
+                    })
+                }
+            })
         },
 
-        // 获取合约的状态信息
-        async getCrowdInfo() {
-            // this.voting.voter(this.account).then(
-            //   r => {
-            //     this.voted = r.voted
-            //   }
-            // );
-            this.voting.proposals({ from: this.account }).then(
-                r => this.proposals = r
-            );
-            this.voting.lock({ from: this.account }).then(
+        async renewInfo() {
+            this.voting.proposalCnt().then(cnt => {
+                for (let index = 0; index < cnt; index++) {
+                    this.voting.proposals(index).then(res => {
+                        this.proposals[index] = { name: res.name, voteCnt: res.voteCnt, win: res.win }
+                    })
+                }
+            })
+            this.voting.lock().then(
                 r => this.lock = r
             );
-            this.voting.chairperson({ from: this.account }).then(
+            this.voting.chairperson().then(
                 r => this.isAuthor = this.account == r
             );
         },
 
-        async login() {
+        login() {
             if (this.curAccount == null || this.ID == null) {
                 this.fail = "帳號和ID不能為空"
                 return
@@ -122,7 +124,6 @@ export default {
             }
             this.voting.checkAccount(this.ID, this.curAccount, { from: this.account }).then(
                 r => {
-                    alert(r)
                     if (r == 1) {
                         this.loginState = true
                         this.account = this.curAccount
@@ -136,7 +137,7 @@ export default {
                         this.fail = "ID 或 帳號錯誤，請重新輸入"
                     }
                 }
-            ).then(() => this.getCrowdInfo())
+            ).then(() => this.renewInfo())
         },
 
         async logout() {
@@ -144,18 +145,18 @@ export default {
             this.web3.eth.getAccounts().then(accs => this.account = accs[0])
             this.curAccount = null
             this.ID = null
-            this.getCrowdInfo()
+            await this.renewInfo()
         },
 
         getNewAccount() {
-            this.voting.getVoterCnt({ from: this.account }).then(
+            this.voting.voterCnt().then(
                 r => {
                     if (r < 10) {
                         this.web3.eth.getAccounts().then(accs => this.curAccount = accs[r])
                     } else {
                         this.fail = "已達帳號上限"
                     }
-                }).then(() => this.getCrowdInfo())
+                }).then(() => this.renewInfo())
         },
 
         async register() {
@@ -172,26 +173,30 @@ export default {
                 this.fail = "帳號錯誤"
                 return
             }
-            this.voting.register(this.ID, this.curAccount, { from: this.account }).then(
+
+            await this.voting.register(this.ID, this.curAccount, { from: this.account }).then(
                 () => {
                     this.loginState = true
                     this.account = this.curAccount
-                    this.fail = "註冊成功"
+                    alert("註冊成功，請記住你的帳號")
                 }
-            ).then(() => this.getCrowdInfo())
+            ).then(() => this.renewInfo())
 
+            if (this.fail == null) {
+                this.fail = "註冊失敗"
+            }
         },
 
-        async closeVote() {
-            this.voting.setLock(true, { from: this.account }).then(() => this.getCrowdInfo())
+        closeVote() {
+            this.voting.setLock(true, { from: this.account }).then(() => this.renewInfo())
         },
 
-        async openVote() {
-            this.voting.setLock(false, { from: this.account }).then(() => this.getCrowdInfo())
+        openVote() {
+            this.voting.setLock(false, { from: this.account }).then(() => this.renewInfo())
         },
 
         vote: function (x) {
-            this.voting.vote({ from: this.account, value: x }).then(() => this.getCrowdInfo())
+            this.voting.vote(x, { from: this.account }).then(() => this.renewInfo())
         },
     }
 }

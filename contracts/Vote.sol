@@ -11,7 +11,7 @@ contract Vote {
 
     struct Proposal {
         string name;
-        uint voteCount;
+        uint voteCnt;
         bool win;
     }
 
@@ -20,14 +20,16 @@ contract Vote {
     mapping(address => Voter) public voters;
     Proposal[] public proposals;
     bool public lock;
-    uint voterCnt;
+    uint public voterCnt;
+    uint public proposalCnt;
 
     constructor(string[] memory proposalNames) {
         chairperson = msg.sender;
         lock = false;
         voterCnt = 0;
+        proposalCnt = proposalNames.length;
         for (uint i = 0; i < proposalNames.length; i++) {
-            proposals.push(Proposal({name: proposalNames[i], voteCount: 0, win: false}));
+            proposals.push(Proposal({name: proposalNames[i], voteCnt: 0, win: false}));
         }
     }
 
@@ -43,10 +45,6 @@ contract Vote {
         return 1;
     }
 
-    function getVoterCnt() external view returns (uint) {
-        return voterCnt;
-    }
-
     function register(string memory _ID, address _acc) external {
         require(users[_ID] == address(0), "ID already exists.");
         require(voters[_acc].isValid == false, "Account already registered.");
@@ -56,7 +54,7 @@ contract Vote {
         voterCnt++;
     }
 
-    function getbollot(string memory _ID) external {
+    function getBollot(string memory _ID) external {
         require(lock == false, "The vote is locked.");
         require(users[_ID] != address(0), "You should register first.");
         require(users[_ID] == msg.sender, "Invalid user.");
@@ -64,6 +62,14 @@ contract Vote {
         require(voters[msg.sender].bollot == 0, "You have already got bollot.");
 
         voters[msg.sender].bollot = 1;
+    }
+
+    function getProposalName(uint proposal) external view returns (string memory, uint, bool) {
+        return (proposals[proposal].name, proposals[proposal].voteCnt, proposals[proposal].win);
+    }
+
+    function getCurBollot(uint proposal) external view returns (uint) {
+        return proposals[proposal].voteCnt;
     }
 
     function vote(uint proposal) external {
@@ -74,20 +80,20 @@ contract Vote {
 
         sender.voted = true;
         sender.voteto = int(proposal);
-        proposals[proposal].voteCount += sender.bollot;
+        proposals[proposal].voteCnt += sender.bollot;
     }
 
     function result() public returns (uint maxCount) {
         require(lock == true, "Vote is not locked.");
         maxCount = 0;
         for (uint p = 0; p < proposals.length; p++) {
-            if (proposals[p].voteCount > maxCount) {
-                maxCount = proposals[p].voteCount;
+            if (proposals[p].voteCnt > maxCount) {
+                maxCount = proposals[p].voteCnt;
             }
         }
 
         for (uint p = 0; p < proposals.length; p++) {
-            if (proposals[p].voteCount == maxCount) {
+            if (proposals[p].voteCnt == maxCount) {
                 proposals[p].win = true;
             }
         }
