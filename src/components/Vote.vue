@@ -19,9 +19,10 @@
             <label>ID</label>
             <input v-model.trim="ID" />
             <br />
+            <button @click="getNewAccount">新帳號</button>
             <button @click="register">註冊</button>
             <button @click="login">登入</button>
-            <div v-if="loginfail != null">{{ loginfail }}</div>
+            <div v-if="fail != null">{{ fail }}</div>
         </div>
 
         <div v-if="loginState" class="user-info">
@@ -63,7 +64,7 @@ export default {
             curAccount: null,
             ID: null,
             loginState: false,
-            loginfail: null,
+            fail: null,
             temp: null,
         };
     },
@@ -95,39 +96,47 @@ export default {
             //     this.voted = r.voted
             //   }
             // );
-            this.voting.proposals().then(
+            this.voting.proposals({ from: this.account }).then(
                 r => this.proposals = r
             );
-            this.voting.lock().then(
+            this.voting.lock({ from: this.account }).then(
                 r => this.lock = r
             );
-            this.voting.chairperson().then(
+            this.voting.chairperson({ from: this.account }).then(
                 r => this.isAuthor = this.account == r
             );
         },
 
-        // async setAccount() {
-        //     this.account = this.message
-        //     await this.getCrowdInfo()
-        // },
-
         async login() {
-            this.voting.checkAccount(this.ID, { from: this.curAccount }).then(
+            if (this.curAccount == null || this.ID == null) {
+                this.fail = "帳號和ID不能為空"
+                return
+            }
+            if (this.curAccount.length != 42 || this.ID.length != 10) {
+                this.fail = "帳號或ID格式錯誤"
+                return
+            }
+            if (this.web3.eth.getBalance(this.curAccount) == 0) {
+                this.fail = "帳號錯誤"
+                return
+            }
+            this.voting.checkAccount(this.ID, this.curAccount, { from: this.account }).then(
                 r => {
+                    alert(r)
                     if (r == 1) {
                         this.loginState = true
                         this.account = this.curAccount
-                        this.loginfail = null
-                    } else if(r ==-1){
-                        this.loginfail = "ID不存在，請先註冊"
-                    } else if(r ==-2){
-                        this.loginfail = "帳號不存在，請先註冊"
-                    } else if(r ==-3){
+                        this.fail = null
+                    } else if (r == 2) {
+                        this.fail = "ID不存在，請先註冊"
+                    } else if (r == 3) {
+                        this.fail = "帳號不存在，請先註冊"
+                    } else if (r == 4) {
                         this.ID = this.curAccount = null
-                        this.loginfail = "ID 或 帳號錯誤，請重新輸入"
+                        this.fail = "ID 或 帳號錯誤，請重新輸入"
                     }
                 }
-            );
+            ).then(() => this.getCrowdInfo())
         },
 
         async logout() {
@@ -135,71 +144,55 @@ export default {
             this.web3.eth.getAccounts().then(accs => this.account = accs[0])
             this.curAccount = null
             this.ID = null
+            this.getCrowdInfo()
+        },
+
+        getNewAccount() {
+            this.voting.getVoterCnt({ from: this.account }).then(
+                r => {
+                    if (r < 10) {
+                        this.web3.eth.getAccounts().then(accs => this.curAccount = accs[r])
+                    } else {
+                        this.fail = "已達帳號上限"
+                    }
+                }).then(() => this.getCrowdInfo())
         },
 
         async register() {
-            this.voting.getVoterCnt().then(
-                r => {
-                    alert("目前有 " + r + " 位投票者")
-                    if (r < 10) {
-                        this.web3.eth.getAccounts().then(accs => this.account = accs[r])
-                        this.voting.register(this.ID, { from: this.account }).then(
-                            r => {
-                                if (r == 1) {
-                                    alert("註冊成功")
-                                    this.loginState = true
-                                    this.loginfail = null
-                                } else if (r == -1) {
-                                    this.loginfail = "此ID已被註冊"
-                                } else if (r == -2) {
-                                    this.loginfail = "此帳號已被使用"
-                                }
-                            }
-                        );
-                    } else {
-                        alert("已超過人數上限")
-                    }
-                });
+            this.fail = null
+            if (this.curAccount == null || this.ID == null) {
+                this.fail = "帳號和ID不能為空"
+                return
+            }
+            if (this.curAccount.length != 42 || this.ID.length != 10) {
+                this.fail = "帳號或ID格式錯誤"
+                return
+            }
+            if (this.web3.eth.getBalance(this.curAccount) == 0) {
+                this.fail = "帳號錯誤"
+                return
+            }
+            this.voting.register(this.ID, this.curAccount, { from: this.account }).then(
+                () => {
+                    this.loginState = true
+                    this.account = this.curAccount
+                    this.fail = "註冊成功"
+                }
+            ).then(() => this.getCrowdInfo())
+
         },
 
         async closeVote() {
-            this.voting.setLock(true, { from: this.account }).then(() =>
-                this.getCrowdInfo()
-            );
+            this.voting.setLock(true, { from: this.account }).then(() => this.getCrowdInfo())
         },
 
         async openVote() {
-            this.voting.setLock(false, { from: this.account }).then(() =>
-                this.getCrowdInfo()
-            );
+            this.voting.setLock(false, { from: this.account }).then(() => this.getCrowdInfo())
         },
 
         vote: function (x) {
-            this.voting.vote({ from: this.account, value: x }).then(() =>
-                this.getCrowdInfo()
-            );
+            this.voting.vote({ from: this.account, value: x }).then(() => this.getCrowdInfo())
         },
-
-        // 赎回
-        withdraw() {
-            // this.voting.withdraw(
-            //   this.voting.withdraw({
-            //     from: this.account
-            //   }).then(() => {
-            //     this.getCrowdInfo()
-            //   })
-            // );
-        },
-
-        // 提取资金
-        withdrawFund() {
-            // this.voting.withdrawFund({
-            //   from: this.account
-            // }).then(() => {
-            //   this.getCrowdInfo()
-            // })
-        },
-
     }
 }
 </script>

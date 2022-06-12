@@ -36,10 +36,10 @@ contract Vote {
         lock = _lock;
     }
 
-    function checkAccount(string memory _ID) external view returns (int) {
-        if(users[_ID] == address(0)) return -1;
-        if(voters[msg.sender].isValid == false) return -2;
-        if(users[_ID] != msg.sender) return -3;
+    function checkAccount(string memory _ID, address _acc) external view returns (uint) {
+        if(users[_ID] == address(0)) return 2;
+        if(voters[_acc].isValid == false) return 3;
+        if(users[_ID] != _acc) return 4;
         return 1;
     }
 
@@ -47,14 +47,13 @@ contract Vote {
         return voterCnt;
     }
 
-    function register(string memory _ID) external returns(int){
-        if(users[_ID] != address(0)) return -1;
-        if(voters[msg.sender].isValid) return -2;
-        users[_ID] = msg.sender;
-        voters[msg.sender].isValid = true;
-        voters[msg.sender].voteto = -1;
-        voterCnt += 1;
-        return 1;
+    function register(string memory _ID, address _acc) external {
+        require(users[_ID] == address(0), "ID already exists.");
+        require(voters[_acc].isValid == false, "Account already registered.");
+        users[_ID] = _acc;
+        voters[_acc].isValid = true;
+        voters[_acc].voteto = -1;
+        voterCnt++;
     }
 
     function getbollot(string memory _ID) external {
