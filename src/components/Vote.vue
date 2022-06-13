@@ -18,9 +18,9 @@
             <input v-model.trim="curAccount" />
             <br />
             <br />
-            <button @click="getNewAccount">新帳號</button>
-            <button v-if="newUser" @click="register">註冊</button>
-            <button v-else @click="login">登入</button>
+            <button type="button" @click="getNewAccount">新帳號</button>
+            <button type="button" v-if="newUser" @click="register">註冊</button>
+            <button type="button" v-else @click="login">登入</button>
             <div v-if="fail != null">{{ fail }}</div>
             <br v-else />
             <br />
@@ -32,7 +32,7 @@
             <br />
             <label class="long-label">帳號：{{ curAccount }}</label>
             <br />
-            <button @click="logout">登出</button>
+            <button type="button" @click="logout">登出</button>
             <br />
             <br />
         </div>
@@ -41,7 +41,7 @@
             <li v-for="i in proposalCnt" :key="i">
                 <span>{{ i }}. {{ proposals[(i - 1).toString()].name }}</span>
                 <span v-if="lock"> 共獲得：{{ proposals[(i - 1).toString()].voteCnt }}票</span>
-                <button v-else :disabled="voter.voted" @click="vote(i - 1)">投{{ i }}號</button>
+                <button type="button" v-else :disabled="voter.voted" @click="vote(i - 1)">投{{ i }}號</button>
                 <span v-if="proposals[(i - 1).toString()].win">最高票!!!</span>
             </li>
             <br />
@@ -53,8 +53,8 @@
         <div class="manager" v-if="isAuthor && loginState">
             <div class="manager-title">
                 <h2>管理員設定</h2>
-                <button :disabled="!lock" @click="openVote">開啟投票</button>
-                <button :disabled="lock" @click="closeVote">關閉投票</button>
+                <button type="button" :disabled="!lock" @click="openVote">開啟投票</button>
+                <button type="button" :disabled="lock" @click="closeVote">關閉投票</button>
             </div>
         </div>
     </div>
