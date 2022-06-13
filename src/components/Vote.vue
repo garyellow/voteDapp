@@ -10,6 +10,7 @@
         </div>
 
         <div v-if="!loginState" class="user-info">
+            <br />
             <label>ID</label>
             <input v-model.trim="ID" @keyup="checkNewUser(ID)" />
             <br />
@@ -21,22 +22,30 @@
             <button v-if="newUser" @click="register">註冊</button>
             <button v-else @click="login">登入</button>
             <div v-if="fail != null">{{ fail }}</div>
+            <br />
+            <br />
         </div>
 
         <div v-if="loginState" class="user-info">
-            <div>ID：{{ ID }}</div>
-            <div>帳號：{{ curAccount }}</div>
+            <br />
+            <label class="left">ID</label>
+            <span class="user">：{{ ID }}</span>
+            <br />
+            <label class="left">帳號</label>
+            <span class="user">：{{ curAccount }}</span>
             <br />
             <button @click="logout">登出</button>
             <br />
             <br />
+        </div>
+        <div v-if="loginState" class="vote-info">
             <br />
             <li v-for="i in proposalCnt" :key="i">
                 <span>{{ i }}. {{ proposals[(i - 1).toString()].name }}</span>
                 <span v-if="lock"> 共獲得：{{ proposals[(i - 1).toString()].voteCnt }}票</span>
                 <button v-else :disabled="voter[(1).toString()]" @click="vote(i - 1)">投{{ i }}號</button>
+                <span v-if="proposals[(i - 1).toString()].win">最高票!!!</span>
             </li>
-            <br />
             <br />
             <br />
             <div v-if="voter[(1).toString()]">你已經投過票了，投的是{{ parseInt(voter[(2).toString()], base) + 1 }}號</div>
@@ -241,11 +250,28 @@ label {
 }
 
 input {
-    width: 30%;
+    width: 70%;
     height: 25px;
     border: 1px solid rgb(160, 160, 255);
     border-radius: 5px;
-    padding: 0 10px;
+    font-size: 14px;
+}
+
+.user-info {
+    margin: auto;
+    width: 40%;
+    border: 5px dotted rgb(162, 255, 239);
+}
+
+.left {
+    float: left;
+}
+
+.user {
+    margin: left;
+    text-align: left;
+    width: 70%;
+    height: 25px;
     font-size: 14px;
 }
 </style>
