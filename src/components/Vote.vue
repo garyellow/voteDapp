@@ -1,5 +1,5 @@
 <template>
-    <div class="content">
+    <div class="content" @mouseover="renewInfo">
         <div class="title">
             <h1>Voting</h1>
         </div>
@@ -233,8 +233,9 @@ export default {
             this.voting.setLock(false, { from: this.account }).then(() => this.renewInfo())
         },
 
-        vote: function (x) {
-            this.voting.vote(x, { from: this.account }).then(() => this.renewInfo())
+        async vote(x) {
+            this.voting.vote(x, { from: this.account })
+            await this.renewInfo()
         },
     }
 }
@@ -242,8 +243,6 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-
-
 label {
     display: inline-block;
     width: 40px;
