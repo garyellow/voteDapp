@@ -22,17 +22,15 @@
             <button v-if="newUser" @click="register">註冊</button>
             <button v-else @click="login">登入</button>
             <div v-if="fail != null">{{ fail }}</div>
-            <br />
+            <br v-else />
             <br />
         </div>
 
         <div v-if="loginState" class="user-info">
             <br />
-            <label class="left">ID</label>
-            <span class="user">：{{ ID }}</span>
+            <label class="long-label">ID：{{ ID }}</label>
             <br />
-            <label class="left">帳號</label>
-            <span class="user">：{{ curAccount }}</span>
+            <label class="long-label">帳號：{{ curAccount }}</label>
             <br />
             <button @click="logout">登出</button>
             <br />
@@ -43,12 +41,12 @@
             <li v-for="i in proposalCnt" :key="i">
                 <span>{{ i }}. {{ proposals[(i - 1).toString()].name }}</span>
                 <span v-if="lock"> 共獲得：{{ proposals[(i - 1).toString()].voteCnt }}票</span>
-                <button v-else :disabled="voter[(1).toString()]" @click="vote(i - 1)">投{{ i }}號</button>
+                <button v-else :disabled="voter.voted" @click="vote(i - 1)">投{{ i }}號</button>
                 <span v-if="proposals[(i - 1).toString()].win">最高票!!!</span>
             </li>
             <br />
             <br />
-            <div v-if="voter[(1).toString()]">你已經投過票了，投的是{{ parseInt(voter[(2).toString()], base) + 1 }}號</div>
+            <div v-if="voter.voted">你已經投過票了，投的是{{ parseInt(voter.voteto, base) + 1 }}號</div>
             <div v-else>你還沒投票</div>
         </div>
 
@@ -244,6 +242,8 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+
+
 label {
     display: inline-block;
     width: 40px;
@@ -260,18 +260,11 @@ input {
 .user-info {
     margin: auto;
     width: 40%;
-    border: 5px dotted rgb(162, 255, 239);
+    border: 5px dotted rgb(116, 255, 183);
 }
 
-.left {
+.long-label {
     float: left;
-}
-
-.user {
-    margin: left;
-    text-align: left;
-    width: 70%;
-    height: 25px;
-    font-size: 14px;
+    width: 100%;
 }
 </style>
