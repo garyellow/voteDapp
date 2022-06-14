@@ -1,5 +1,5 @@
 <template>
-    <div class="content" @mouseover="renewInfo">
+    <div class="content" @mouseenter="renewInfo">
         <div class="title">
             <h1>Voting</h1>
         </div>
@@ -233,9 +233,8 @@ export default {
             this.voting.setLock(false, { from: this.account }).then(() => this.renewInfo())
         },
 
-        async vote(x) {
-            this.voting.vote(x, { from: this.account })
-            await this.renewInfo()
+        vote(x) {
+            this.voting.vote(x, { from: this.account }).then(() => this.renewInfo())
         },
     }
 }
