@@ -38,11 +38,11 @@
         </div>
         <div v-if="loginState" class="vote-info">
             <br />
-            <li v-for="i in proposalCnt" :key="i">
-                <span>{{ i }}. {{ proposals[(i - 1).toString()].name }}</span>
-                <span v-if="lock"> 共獲得：{{ proposals[(i - 1).toString()].voteCnt }}票</span>
-                <button type="button" v-else :disabled="voter.voted" @click="vote(i - 1)">投{{ i }}號</button>
-                <span v-if="proposals[(i - 1).toString()].win">最高票!!!</span>
+            <li v-for="(proposal, key) in proposals" :key="proposal">
+                <span>{{ key + 1 }}. {{ proposal.name }}</span>
+                <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票</span>
+                <button type="button" v-else :disabled="voter.voted" @click="vote(key)">投{{ key + 1 }}號</button>
+                <span v-if="proposal.win"> 最高票!!!</span>
             </li>
             <br />
             <br />
