@@ -12,10 +12,10 @@
         <div v-if="!loginState" class="user-info">
             <br />
             <label>ID</label>
-            <input v-model.trim="ID" @keyup="checkNewUser(ID)" />
+            <input type="string" v-model.trim="ID" @keyup="checkNewUser(ID)" />
             <br />
             <label>帳號</label>
-            <input v-model.trim="curAccount" />
+            <input type="string" v-model.trim="curAccount" />
             <br />
             <br />
             <button type="button" @click="getNewAccount">新帳號</button>
