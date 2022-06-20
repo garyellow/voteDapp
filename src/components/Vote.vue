@@ -15,11 +15,10 @@
             <label>ID</label>
             <input type="string" v-model.trim="ID" @keyup="checkNewUser(ID)" />
             <br />
-            <label>帳號</label>
-            <input type="string" v-model.trim="curAccount" />
+            <label v-if="!newUser">帳號</label>
+            <input v-if="!newUser" type="string" v-model.trim="curAccount" />
+            <br v-if="!newUser" />
             <br />
-            <br />
-            <button type="button" @click="getNewAccount">新帳號</button>
             <button type="button" v-if="newUser" @click="register">註冊</button>
             <button type="button" v-else @click="login">登入</button>
             <div v-if="fail != null" class="fail">{{ fail }}</div>
@@ -29,7 +28,7 @@
 
         <div v-if="loginState" class="user-info">
             <br />
-            <label class="long-label">ID{{ ID }}</label>
+            <label class="long-label">ID：{{ ID }}</label>
             <br />
             <label class="long-label">帳號：{{ curAccount }}</label>
             <br />
@@ -37,13 +36,13 @@
             <br />
             <br />
         </div>
-        <div v-if="loginState" class="vote-info">
+        <div v-if="loginState" @mouseenter="renewInfo" class="vote-info">
             <br />
             <li v-for="(proposal, key) in proposals" :key="proposal">
                 <span v-if="proposal.win"> &#9818;</span>
                 <span>{{ key + 1 }}. {{ proposal.name }}</span>
                 <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票 </span>
-                <button type="button" v-else :disabled="voter.voted" @mouseenter="renewInfo" @click="vote(key)">投{{ key + 1 }}號</button>
+                <button type="button" v-else :disabled="voter.voted" @click="vote(key)">投{{ key + 1 }}號</button>
             </li>
             <br />
             <br />
@@ -140,12 +139,23 @@ export default {
 
         async register() {
             this.fail = null
-            if (this.curAccount == null || this.ID == null) {
-                this.fail = "帳號和ID不能為空"
+
+            this.voting.voterCnt().then(
+                r => {
+                    if (r < 10) {
+                        this.web3.eth.getAccounts().then(accs => this.curAccount = accs[r])
+                    } else {
+                        this.fail = "已達帳號上限"
+                        return;
+                    }
+                })
+
+            if (this.ID == null) {
+                this.fail = "ID不能為空"
                 return
             }
-            if (this.curAccount.length != 42 || this.ID.length != 10) {
-                this.fail = "帳號或ID格式錯誤"
+            if (this.ID.length != 10) {
+                this.fail = "ID格式錯誤"
                 return
             }
             this.web3.eth.getBalance(this.curAccount).then(balance => {
@@ -210,21 +220,9 @@ export default {
             this.web3.eth.getAccounts().then(accs => this.account = accs[0])
             this.curAccount = null
             this.ID = null
+            this.newUser = true
             await this.renewInfo()
         },
-
-        getNewAccount() {
-            this.fail = null
-            this.voting.voterCnt().then(
-                r => {
-                    if (r < 10) {
-                        this.web3.eth.getAccounts().then(accs => this.curAccount = accs[r])
-                    } else {
-                        this.fail = "已達帳號上限"
-                    }
-                }).then(() => this.renewInfo())
-        },
-
 
         closeVote() {
             this.voting.setLock(true, { from: this.account }).then(() => this.renewInfo())
