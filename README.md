@@ -3,8 +3,8 @@
 ## Project setup
 ```
 npm install
-npm install ganache -golbal
-npm install truffle -golbal
+npm install ganache -g
+npm install truffle -g
 ```
 
 ### Start HttpProvider
