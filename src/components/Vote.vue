@@ -1,5 +1,5 @@
 <template>
-    <div class="content" @mouseenter="renewInfo">
+    <div class="content">
         <div class="title">
             <h1>Voting</h1>
         </div>
@@ -7,6 +7,7 @@
         <div class="status">
             <div v-if="lock">投票已結束</div>
             <div v-else>投票進行中</div>
+            <br />
         </div>
 
         <div v-if="!loginState" class="user-info">
@@ -21,14 +22,14 @@
             <button type="button" @click="getNewAccount">新帳號</button>
             <button type="button" v-if="newUser" @click="register">註冊</button>
             <button type="button" v-else @click="login">登入</button>
-            <div v-if="fail != null">{{ fail }}</div>
+            <div v-if="fail != null" class="fail">{{ fail }}</div>
             <br v-else />
             <br />
         </div>
 
         <div v-if="loginState" class="user-info">
             <br />
-            <label class="long-label">ID：{{ ID }}</label>
+            <label class="long-label">ID{{ ID }}</label>
             <br />
             <label class="long-label">帳號：{{ curAccount }}</label>
             <br />
@@ -39,15 +40,16 @@
         <div v-if="loginState" class="vote-info">
             <br />
             <li v-for="(proposal, key) in proposals" :key="proposal">
+                <span v-if="proposal.win"> &#9818;</span>
                 <span>{{ key + 1 }}. {{ proposal.name }}</span>
-                <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票</span>
-                <button type="button" v-else :disabled="voter.voted" @click="vote(key)">投{{ key + 1 }}號</button>
-                <span v-if="proposal.win"> 最高票!!!</span>
+                <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票 </span>
+                <button type="button" v-else :disabled="voter.voted" @mouseenter="renewInfo" @click="vote(key)">投{{ key
+                    + 1 }}號</button>
             </li>
             <br />
             <br />
-            <div v-if="voter.voted">你已經投過票了，投的是{{ parseInt(voter.voteto, base) + 1 }}號</div>
-            <div v-else>你還沒投票</div>
+            <div v-if="voter.voted && !lock">你投給{{ parseInt(voter.voteto, base) + 1 }}號</div>
+            <div v-else-if="!lock">你還沒投票</div>
         </div>
 
         <div class="manager" v-if="isAuthor && loginState">
@@ -252,7 +254,7 @@ input {
     height: 25px;
     border: 1px solid rgb(160, 160, 255);
     border-radius: 5px;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .user-info {
@@ -264,5 +266,10 @@ input {
 .long-label {
     float: left;
     width: 100%;
+}
+
+.fail {
+    font-size: 20px;
+    color: red;
 }
 </style>
