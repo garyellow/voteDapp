@@ -43,8 +43,7 @@
                 <span v-if="proposal.win"> &#9818;</span>
                 <span>{{ key + 1 }}. {{ proposal.name }}</span>
                 <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票 </span>
-                <button type="button" v-else :disabled="voter.voted" @mouseenter="renewInfo" @click="vote(key)">投{{ key
-                    + 1 }}號</button>
+                <button type="button" v-else :disabled="voter.voted" @mouseenter="renewInfo" @click="vote(key)">投{{ key + 1 }}號</button>
             </li>
             <br />
             <br />
