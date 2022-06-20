@@ -1,5 +1,9 @@
 <template>
     <div class="content">
+        <div v-if="!loginState" class="vote-info">
+            <img :src="pic" width='300' aspect-ratio auto>
+        </div>
+
         <div class="title">
             <h1>Voting</h1>
         </div>
@@ -12,13 +16,14 @@
 
         <div v-if="!loginState" class="user-info">
             <br />
-            <label>ID</label>
-            <input type="string" v-model.trim="ID" @keyup="checkNewUser(ID)" />
+            <label><b>ID</b></label>
+            <input type="string" placeholder='請輸入身分證號碼' v-model.trim="ID" @keyup="checkNewUser(ID)" />
             <br />
-            <label v-if="!newUser">帳號</label>
-            <input v-if="!newUser" type="string" v-model.trim="curAccount" />
+            <label v-if="!newUser"><b>帳號</b></label>
+            <input v-if="!newUser" type="string" placeholder='請輸入帳號' v-model.trim="curAccount" />
             <br v-if="!newUser" />
             <br />
+
             <button type="button" v-if="newUser" @click="register">註冊</button>
             <button type="button" v-else @click="login">登入</button>
             <div v-if="fail != null" class="fail">{{ fail }}</div>
@@ -28,27 +33,94 @@
 
         <div v-if="loginState" class="user-info">
             <br />
-            <label class="long-label">ID：{{ ID }}</label>
-            <br />
-            <label class="long-label">帳號：{{ curAccount }}</label>
-            <br />
+            <div v-if="voter.voted && !lock">
+                <label class="long-label">
+                    <blockquote>
+                        <blockquote>
+                            <p align="left">已完成投票
+                                <br>ID:{{ ID }}<br>帳號：{{ curAccount }}
+                            </p>
+                        </blockquote>
+                    </blockquote>
+                </label>
+            </div>
+
+            <div v-else-if="!lock">
+                <span class='highlight'>
+                    <label class="long-label">
+                        <blockquote>
+                            <blockquote>
+                                <p align="left">尚未投票
+                                    <br>ID:{{ ID }}<br>帳號：{{ curAccount }}
+                                </p>
+                            </blockquote>
+                        </blockquote>
+                    </label>
+                </span>
+            </div>
+
             <button type="button" @click="logout">登出</button>
             <br />
             <br />
         </div>
+
         <div v-if="loginState" @mouseenter="renewInfo" class="vote-info">
+            <p align=center>
+            <table border="1" style="width:80%">
+                <thead>
+                    <tr>
+                        <th v-for="i in 3" :key="i">
+                            <span>候選{{ i }}</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td v-for="proposal in proposals" :key="proposal">
+                            <span>{{ proposal.name }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td v-for="proposal in proposals" :key="proposal">
+                            <img :src="proposal.pic" width='200' aspect-ratio auto>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td v-for="proposal in proposals" :key="proposal">
+                            <span>政見：{{ proposal.description }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td v-for="proposal in proposals" :key="proposal">
+                            <span>email:{{ proposal.email }}</span>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td v-for="(proposal, key) in proposals" :key="proposal">
+                            <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票 </span>
+                            <button type="button" v-else :disabled="voter.voted" @click="vote(key)">投{{ key + 1
+                                }}號</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+            </p>
+        </div>
+        <!-- <div v-if="loginState" class="vote-info">
             <br />
             <li v-for="(proposal, key) in proposals" :key="proposal">
                 <span v-if="proposal.win"> &#9818;</span>
                 <span>{{ key + 1 }}. {{ proposal.name }}</span>
                 <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票 </span>
-                <button type="button" v-else :disabled="voter.voted" @click="vote(key)">投{{ key + 1 }}號</button>
+                <button type="button" v-else :disabled="voter.voted" @mouseenter="renewInfo" @click="vote(key)">投{{ key + 1 }}號</button>
             </li>
             <br />
             <br />
+
             <div v-if="voter.voted && !lock">你投給{{ parseInt(voter.voteto, base) + 1 }}號</div>
-            <div v-else-if="!lock">你還沒投票</div>
-        </div>
+        </div> -->
 
         <div class="manager" v-if="isAuthor && loginState">
             <div class="manager-title">
@@ -69,6 +141,7 @@ export default {
     name: 'My_vote',
     data() {
         return {
+            pic: "https://media.istockphoto.com/vectors/electronic-voting-politics-and-elections-illustration-concept-vector-id543045206?s=612x612",
             lock: null,
             isAuthor: null,
             proposals: [],
@@ -82,6 +155,7 @@ export default {
         };
     },
 
+    // 網頁生成時
     async created() {
         await this.initWeb3Account()
         await this.initContract()
@@ -140,16 +214,6 @@ export default {
         async register() {
             this.fail = null
 
-            this.voting.voterCnt().then(
-                r => {
-                    if (r < 10) {
-                        this.web3.eth.getAccounts().then(accs => this.curAccount = accs[r])
-                    } else {
-                        this.fail = "已達帳號上限"
-                        return;
-                    }
-                })
-
             if (this.ID == null) {
                 this.fail = "ID不能為空"
                 return
@@ -158,24 +222,24 @@ export default {
                 this.fail = "ID格式錯誤"
                 return
             }
-            this.web3.eth.getBalance(this.curAccount).then(balance => {
-                if (balance.toNumber() == 0) {
-                    this.fail = "帳號錯誤"
-                    return
-                }
-            })
 
-            await this.voting.register(this.ID, this.curAccount, { from: this.account }).then(
-                () => {
-                    this.loginState = true
-                    this.account = this.curAccount
-                    alert("註冊成功，請記住你的帳號")
-                }
-            ).then(() => this.renewInfo())
-
-            if (this.loginState == false) {
-                this.fail = "註冊失敗，請檢察ID或帳號是否已被註冊"
-            }
+            await this.voting.voterCnt().then(
+                r => {
+                    if (r < 10) {
+                        this.web3.eth.getAccounts().then(accs => {
+                            this.voting.register(this.ID, accs[r], { from: this.account }).then(
+                                () => {
+                                    this.loginState = true
+                                    this.account = this.curAccount = accs[r]
+                                    alert("註冊成功，請記住你的帳號")
+                                }
+                            ).then(() => this.renewInfo())
+                        })
+                    } else {
+                        this.fail = "已達帳號上限"
+                        return;
+                    }
+                })
         },
 
         async login() {
@@ -249,15 +313,16 @@ label {
 input {
     width: 70%;
     height: 25px;
-    border: 1px solid rgb(160, 160, 255);
+    border: 1.5px solid rgb(144, 144, 251);
     border-radius: 5px;
     font-size: 16px;
 }
 
 .user-info {
     margin: auto;
-    width: 40%;
-    border: 5px dotted rgb(116, 255, 183);
+    width: 50%;
+    border: 5px dotted rgb(59, 126, 90);
+    border-radius: 10px;
 }
 
 .long-label {
@@ -267,6 +332,10 @@ input {
 
 .fail {
     font-size: 20px;
+    color: red;
+}
+
+.highlight {
     color: red;
 }
 </style>
