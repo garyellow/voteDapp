@@ -18,7 +18,7 @@
                         show-word-limit clearable @keyup="checkNewUser(ID)" />
                     <br />
                     <label v-if="!newUser"><b>帳號</b></label>
-                    <el-input class="input" v-if="!newUser" type="text" v-model.trim="curAccount" placeholder="請輸入帳號"
+                    <el-input class="input" v-if="!newUser" type="password" v-model.trim="curAccount" placeholder="請輸入帳號"
                         maxlength="42" show-word-limit clearable />
                     <br v-if="!newUser" />
                     <br />
