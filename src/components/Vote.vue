@@ -1,134 +1,117 @@
 <template>
-    <div class="content">
-        <div v-if="!loginState" class="vote-info">
-            <img :src="pic" width='300' aspect-ratio auto>
-        </div>
+    <div class="common-layout">
+        <el-container v-if="!loginState">
+            <el-header height="200">
+                <div class="vote-info">
+                    <img :src="pic" width="750" aspect-ratio="auto">
+                </div>
+                <div class="status">
+                    <span v-if="lock">投票已結束</span>
+                    <span v-else>投票進行中</span>
+                </div>
+            </el-header>
+            <el-main>
+                <div class="user-info">
+                    <br />
+                    <label><b>ID</b></label>
+                    <input type="string" placeholder='請輸入身分證號碼' v-model.trim="ID" @keyup="checkNewUser(ID)" />
+                    <br />
+                    <label v-if="!newUser"><b>帳號</b></label>
+                    <input v-if="!newUser" type="string" placeholder='請輸入帳號' v-model.trim="curAccount" />
+                    <br v-if="!newUser" />
+                    <br />
 
-        <div class="title">
-            <h1>Voting</h1>
-        </div>
+                    <button type="button" v-if="newUser" @click="register">註冊</button>
+                    <button type="button" v-else @click="login">登入</button>
+                    <br />
+                    <el-alert v-if="fail != null" title="Error" type="error" center :closable="false" show-icon>{{ fail
+                        }}
+                    </el-alert>
+                    <br v-else />
+                </div>
+            </el-main>
+        </el-container>
+        <el-container v-else>
+            <el-header height="80">
+                <div class="title">
+                    <h1>Voting</h1>
+                </div>
 
-        <div class="status">
-            <div v-if="lock">投票已結束</div>
-            <div v-else>投票進行中</div>
-            <br />
-        </div>
-
-        <div v-if="!loginState" class="user-info">
-            <br />
-            <label><b>ID</b></label>
-            <input type="string" placeholder='請輸入身分證號碼' v-model.trim="ID" @keyup="checkNewUser(ID)" />
-            <br />
-            <label v-if="!newUser"><b>帳號</b></label>
-            <input v-if="!newUser" type="string" placeholder='請輸入帳號' v-model.trim="curAccount" />
-            <br v-if="!newUser" />
-            <br />
-
-            <button type="button" v-if="newUser" @click="register">註冊</button>
-            <button type="button" v-else @click="login">登入</button>
-            <div v-if="fail != null" class="fail">{{ fail }}</div>
-            <br v-else />
-            <br />
-        </div>
-
-        <div v-if="loginState" class="user-info">
-            <br />
-            <div v-if="voter.voted && !lock">
-                <label class="long-label">
-                    <blockquote>
-                        <blockquote>
-                            <p align="left">已完成投票
-                                <br>ID:{{ ID }}<br>帳號：{{ curAccount }}
-                            </p>
-                        </blockquote>
-                    </blockquote>
-                </label>
-            </div>
-
-            <div v-else-if="!lock">
-                <span class='highlight'>
-                    <label class="long-label">
-                        <blockquote>
-                            <blockquote>
-                                <p align="left">尚未投票
-                                    <br>ID:{{ ID }}<br>帳號：{{ curAccount }}
-                                </p>
-                            </blockquote>
-                        </blockquote>
-                    </label>
-                </span>
-            </div>
-
-            <button type="button" @click="logout">登出</button>
-            <br />
-            <br />
-        </div>
-
-        <div v-if="loginState" @mouseenter="renewInfo" class="vote-info">
-            <p align=center>
-            <table border="1" style="width:80%">
-                <thead>
-                    <tr>
-                        <th v-for="i in 3" :key="i">
-                            <span>候選{{ i }}</span>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td v-for="proposal in proposals" :key="proposal">
-                            <span>{{ proposal.name }}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td v-for="proposal in proposals" :key="proposal">
-                            <img :src="proposal.pic" width='200' aspect-ratio auto>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td v-for="proposal in proposals" :key="proposal">
-                            <span>政見：{{ proposal.description }}</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td v-for="proposal in proposals" :key="proposal">
-                            <span>email:{{ proposal.email }}</span>
-                        </td>
-                    </tr>
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td v-for="(proposal, key) in proposals" :key="proposal">
-                            <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票 </span>
-                            <button type="button" v-else :disabled="voter.voted" @click="vote(key)">投{{ key + 1
-                                }}號</button>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-            </p>
-        </div>
-        <!-- <div v-if="loginState" class="vote-info">
-            <br />
-            <li v-for="(proposal, key) in proposals" :key="proposal">
-                <span v-if="proposal.win"> &#9818;</span>
-                <span>{{ key + 1 }}. {{ proposal.name }}</span>
-                <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票 </span>
-                <button type="button" v-else :disabled="voter.voted" @mouseenter="renewInfo" @click="vote(key)">投{{ key + 1 }}號</button>
-            </li>
-            <br />
-            <br />
-
-            <div v-if="voter.voted && !lock">你投給{{ parseInt(voter.voteto, base) + 1 }}號</div>
-        </div> -->
-
-        <div class="manager" v-if="isAuthor && loginState">
-            <div class="manager-title">
-                <h2>管理員設定</h2>
-                <button type="button" :disabled="!lock" @click="openVote">開啟投票</button>
-                <button type="button" :disabled="lock" @click="closeVote">關閉投票</button>
-            </div>
-        </div>
+                <div class="status">
+                    <div v-if="lock">投票已結束</div>
+                    <div v-else>投票進行中</div>
+                    <br />
+                </div>
+            </el-header>
+            <el-container>
+                <el-aside width="35%">
+                    <div v-if="loginState" class="user-login-info">
+                        <span v-if="!voter.voted" class='highlight'>尚未投票 </span>
+                        <span v-else>已完成投票 </span>
+                        <br>ID:{{ ID }}<br>帳號：{{ curAccount }}
+                        <br />
+                        <button type="button" @click="logout">登出</button>
+                        <br />
+                        <br />
+                    </div>
+                    <div class="user-login-info" v-if="isAuthor && loginState">
+                        <div>
+                            <h2>管理員設定</h2>
+                            <button type="button" :disabled="!lock" @click="openVote">開啟投票</button>
+                            <button type="button" :disabled="lock" @click="closeVote">關閉投票</button>
+                        </div>
+                    </div>
+                </el-aside>
+                <el-main>
+                    <div v-if="loginState" class="vote-info">
+                        <p align=center>
+                        <table border="1" style="width:80%">
+                            <thead>
+                                <tr>
+                                    <th v-for="i in 3" :key="i">
+                                        <span>候選{{ i }}</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td v-for="proposal in proposals" :key="proposal" align='center' valign="middle">
+                                        <span>{{ proposal.name }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td v-for="proposal in proposals" :key="proposal" align='center' valign="middle">
+                                        <img :src="proposal.pic" width='200' aspect-ratio auto>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td v-for="proposal in proposals" :key="proposal" align='center' valign="middle">
+                                        <span>政見：{{ proposal.description }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td v-for="proposal in proposals" :key="proposal" align='center' valign="middle">
+                                        <span>email:{{ proposal.email }}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td v-for="(proposal, key) in proposals" :key="proposal" align='center'
+                                        valign="middle">
+                                        <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票 </span>
+                                        <el-button v-else type="success" round :icon="Check" :disabled="voter.voted"
+                                            @click="vote(key)">投{{ key + 1 }}號
+                                        </el-button>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        </p>
+                    </div>
+                </el-main>
+            </el-container>
+        </el-container>
     </div>
 </template>
 
@@ -141,7 +124,7 @@ export default {
     name: 'My_vote',
     data() {
         return {
-            pic: "https://media.istockphoto.com/vectors/electronic-voting-politics-and-elections-illustration-concept-vector-id543045206?s=612x612",
+            pic: "https://image.shutterstock.com/image-illustration/evoting-concept-web-banner-flat-260nw-649887880.jpg",
             lock: null,
             isAuthor: null,
             proposals: [],
@@ -305,6 +288,7 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+
 label {
     display: inline-block;
     width: 40px;
@@ -312,10 +296,18 @@ label {
 
 input {
     width: 70%;
-    height: 25px;
-    border: 1.5px solid rgb(144, 144, 251);
+    border: 1px solid rgb(27, 139, 154);
+    border-radius: 4px;
+    padding: 5px;
+}
+
+.status {
+    width: 70%;
+    margin: auto;
+    padding: 10px;
     border-radius: 5px;
-    font-size: 16px;
+    background-color: #f2f2f2;
+    color: #333;
 }
 
 .user-info {
@@ -325,9 +317,10 @@ input {
     border-radius: 10px;
 }
 
-.long-label {
-    float: left;
-    width: 100%;
+.user-login-info {
+    margin: auto;
+    border: 5px dotted rgb(59, 126, 90);
+    border-radius: 10px;
 }
 
 .fail {
@@ -337,5 +330,9 @@ input {
 
 .highlight {
     color: red;
+}
+
+.common-layout {
+    margin: auto;
 }
 </style>
