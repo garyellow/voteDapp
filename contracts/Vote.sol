@@ -11,8 +11,8 @@ contract Vote {
     struct Proposal {
         string name;
         string pic;
-        string description;
-        string email;
+        string party;
+        string politics;
         uint256 voteCnt;
         bool win;
     }
@@ -25,14 +25,14 @@ contract Vote {
     uint256 public voterCnt;
     uint256 public proposalCnt;
 
-    constructor(string[] memory proposalNames, string[] memory proposalPics, string[] memory proposalDescriptions, string[] memory proposalEmails) {
+    constructor(string[] memory proposalNames, string[] memory proposalPics, string[] memory proposalParty, string[] memory proposalPolitics) {
         chairperson = msg.sender;
         lock = false;
         voterCnt = 0;
         proposalCnt = proposalNames.length;
         for (uint256 i = 0; i < proposalNames.length; i++) {
             proposals.push(
-                Proposal({name: proposalNames[i], pic: proposalPics[i], description: proposalDescriptions[i], email: proposalEmails[i], voteCnt: 0, win: false})
+                Proposal({name: proposalNames[i], pic: proposalPics[i], party: proposalParty[i], politics: proposalPolitics[i], voteCnt: 0, win: false})
             );
         }
     }
