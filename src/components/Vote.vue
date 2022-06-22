@@ -14,10 +14,12 @@
                 <div class="user-info">
                     <br />
                     <label><b>ID</b></label>
-                    <input type="string" placeholder='請輸入身分證號碼' v-model.trim="ID" @keyup="checkNewUser(ID)" />
+                    <el-input class="input" type="text" v-model.trim="ID" placeholder="請輸入身分證號碼" maxlength="10"
+                        show-word-limit clearable @keyup="checkNewUser(ID)" />
                     <br />
                     <label v-if="!newUser"><b>帳號</b></label>
-                    <input v-if="!newUser" type="string" placeholder='請輸入帳號' v-model.trim="curAccount" />
+                    <el-input class="input" v-if="!newUser" type="text" v-model.trim="curAccount" placeholder="請輸入帳號"
+                        maxlength="42" show-word-limit clearable />
                     <br v-if="!newUser" />
                     <br />
 
@@ -25,7 +27,7 @@
                     <button type="button" v-else @click="login">登入</button>
                     <br />
                     <el-alert v-if="fail != null" title="Error" type="error" center :closable="false" show-icon>{{ fail
-                        }}
+                    }}
                     </el-alert>
                     <br v-else />
                 </div>
@@ -47,7 +49,7 @@
                 <el-aside width="35%">
                     <div v-if="loginState" class="user-login-info">
                         <span v-if="!voter.voted" class='highlight'>尚未投票 </span>
-                        <span v-else>已完成投票 </span>
+                        <span v-else>已完成投票，你投給了{{ parseInt(voter.voteto) + 1 }}號 </span>
                         <br>ID:{{ ID }}<br>帳號：{{ curAccount }}
                         <br />
                         <button type="button" @click="logout">登出</button>
@@ -100,9 +102,15 @@
                                     <td v-for="(proposal, key) in proposals" :key="proposal" align='center'
                                         valign="middle">
                                         <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票 </span>
-                                        <el-button v-else type="success" round :icon="Check" :disabled="voter.voted"
-                                            @click="vote(key)">投{{ key + 1 }}號
-                                        </el-button>
+                                        <el-popconfirm confirm-button-text="對啦" cancel-button-text="才不要"
+                                            :icon="InfoFilled" icon-color="#626AEF" title="你確定要投他嗎？"
+                                            @confirm="vote(key)">
+                                            <template #reference>
+                                                <el-button v-if="!lock" type="success" round :icon="Check"
+                                                    :disabled="voter.voted">投{{ key + 1 }}號
+                                                </el-button>
+                                            </template>
+                                        </el-popconfirm>
                                     </td>
                                 </tr>
                             </tfoot>
@@ -119,6 +127,7 @@
 import Web3 from "web3";
 import contract from "@truffle/contract";
 import Vote from '../../build/contracts/Vote.json';
+import { ElMessage } from 'element-plus'
 
 export default {
     name: 'My_vote',
@@ -129,7 +138,11 @@ export default {
             isAuthor: null,
             proposals: [],
             proposalCnt: 0,
-            voter: null,
+            voter: {
+                bollot: 0,
+                voted: false,
+                voteto: 0,
+            },
             ID: null,
             curAccount: null,
             newUser: true,
@@ -280,7 +293,11 @@ export default {
         },
 
         vote(x) {
-            this.voting.vote(x, { from: this.account }).then(() => this.renewInfo())
+            this.voting.vote(x, { from: this.account }).then(() => this.renewInfo().then(() => ElMessage({
+                showClose: true,
+                message: '投票成功',
+                type: 'success',
+            })))
         },
     }
 }
@@ -288,16 +305,13 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-
 label {
     display: inline-block;
     width: 40px;
 }
 
-input {
+.input {
     width: 70%;
-    border: 1px solid rgb(27, 139, 154);
-    border-radius: 4px;
     padding: 5px;
 }
 
