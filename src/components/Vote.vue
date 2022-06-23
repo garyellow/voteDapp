@@ -36,7 +36,7 @@
         <el-container v-else>
             <el-header height="80">
                 <div class="title">
-                    <h1>Voting</h1>
+                    <h1>Voting System</h1>
                 </div>
 
                 <div class="status">
@@ -46,7 +46,7 @@
                 </div>
             </el-header>
             <el-container>
-                <el-aside width="35%">
+                <el-aside width="40%">
                     <div v-if="loginState" class="user-login-info">
                         <span v-if="!voter.voted" class='highlight'>尚未投票 </span>
                         <span v-else>已完成投票，你投給了{{ parseInt(voter.voteto) + 1 }}號 </span>
@@ -88,12 +88,12 @@
                                 </tr>
                                 <tr>
                                     <td v-for="proposal in proposals" :key="proposal" align='center' valign="middle">
-                                        <span>政見：{{ proposal.description }}</span>
+                                        <span>政黨：{{ proposal.party }}</span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td v-for="proposal in proposals" :key="proposal" align='center' valign="middle">
-                                        <span>email:{{ proposal.email }}</span>
+                                        <span>政見:{{ proposal.politics }}</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -102,11 +102,11 @@
                                     <td v-for="(proposal, key) in proposals" :key="proposal" align='center'
                                         valign="middle">
                                         <span v-if="lock"> 共獲得：{{ proposal.voteCnt }}票 </span>
-                                        <el-popconfirm confirm-button-text="對啦" cancel-button-text="才不要"
-                                            :icon="InfoFilled" icon-color="#626AEF" title="你確定要投他嗎？"
+                                        <el-popconfirm confirm-button-text="確定" cancel-button-text="取消"
+                                            :icon="InfoFilled" icon-color="#e84850" title="確定投票後將無法返回或取消"
                                             @confirm="vote(key)">
                                             <template #reference>
-                                                <el-button v-if="!lock" type="success" round :icon="Check"
+                                                <el-button v-if="!lock" type="danger" plain
                                                     :disabled="voter.voted">投{{ key + 1 }}號
                                                 </el-button>
                                             </template>
@@ -305,6 +305,12 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+h1 {
+    display: block;
+    font-size: 3em;
+    font-weight: bold;
+}
+
 label {
     display: inline-block;
     width: 40px;
