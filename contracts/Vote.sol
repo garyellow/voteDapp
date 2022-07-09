@@ -25,14 +25,14 @@ contract Vote {
     uint256 public voterCnt;
     uint256 public proposalCnt;
 
-    constructor(string[] memory proposalNames, string[] memory proposalPics, string[] memory proposalParty, string[] memory proposalPolitics) {
+    constructor(string[] memory proposalNames, string[] memory proposalPics, string[] memory proposalParties, string[] memory proposalPolitics) {
         chairperson = msg.sender;
         lock = false;
         voterCnt = 0;
         proposalCnt = proposalNames.length;
-        for (uint256 i = 0; i < proposalNames.length; i++) {
+        for (uint256 i = 0; i < proposalCnt; i++) {
             proposals.push(
-                Proposal({name: proposalNames[i], pic: proposalPics[i], party: proposalParty[i], politics: proposalPolitics[i], voteCnt: 0, win: false})
+                Proposal({name: proposalNames[i], pic: proposalPics[i], party: proposalParties[i], politics: proposalPolitics[i], voteCnt: 0, win: false})
             );
         }
     }
